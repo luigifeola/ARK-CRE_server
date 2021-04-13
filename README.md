@@ -1,1 +1,1 @@
-# ARK-CRE_server
+# CollectiveResourceExploitation
