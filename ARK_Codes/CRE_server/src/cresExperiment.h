@@ -1,5 +1,5 @@
-#ifndef DHTFEXPERIMENT_H
-#define DHTFEXPERIMENTH
+#ifndef CRESEXPERIMENT_H
+#define CRESEXPERIMENTH
 
 #include "global.h"
 
@@ -12,9 +12,9 @@
 #include "kilobot.h"
 #include "kilobotexperiment.h"
 #include "kilobotenvironment.h"
-#include "dhtfEnvironment.h"
+#include "cresEnvironment.h"
 
-// there are the file for the dhtf experiment
+// there are the file for the cres experiment
 #include "area.h"
 
 // OpenCV includes
@@ -88,10 +88,10 @@ public:
 }; /* end class kilo_log */
 
 /**
- * @brief mykilobotexperiment is where the dhtf experiment is defined and ARK templates area extended
+ * @brief mykilobotexperiment is where the cres experiment is defined and ARK templates area extended
  * This create a separate window in the ARK GUI where one can set up experiments variables.
 */
-class DHTFEXPSHARED_EXPORT mykilobotexperiment : public KilobotExperiment
+class CRESEXPSHARED_EXPORT mykilobotexperiment : public KilobotExperiment
 {
     Q_OBJECT
 
@@ -149,20 +149,16 @@ private:
     void plotEnvironment();
 
     //
-    mykilobotenvironment dhtfEnvironment;
+    mykilobotenvironment cresEnvironment;
     QTime m_elapsed_time;
 
     // logging variables
     bool saveImages;
     int savedImagesCounter;
     bool logExp;
-    QFile log_file_areas;
-    QString log_filename_prefix = "log_dhtf";
-    QTextStream log_stream_areas;
+    QString log_filename_prefix = "log_cres";
     QFile log_file;
-    QFile log_file1;
     QTextStream log_stream;
-    QTextStream log_stream1;
 
     float log_period = 1.0;
     float last_log = 0.0;
@@ -182,4 +178,4 @@ private:
 }; /* end class mykilobotexperiment */
 
 
-#endif // DHTFEXPERIMENT_H
+#endif // CRESEXPERIMENT_H

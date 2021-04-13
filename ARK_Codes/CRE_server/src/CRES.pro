@@ -8,10 +8,10 @@ QT       -= gui
 
 QT += widgets network
 
-TARGET = CRE_server
+TARGET = CRES
 TEMPLATE = lib
 
-DEFINES += CREEXP_LIBRARY
+DEFINES += CRESEXP_LIBRARY
 
 SOURCES += \
     kilobot.cpp \
@@ -26,7 +26,8 @@ HEADERS +=\
     kilobotenvironment.h \
     global.h \
     cresEnvironment.h \
-    cresExperiment.h
+    cresExperiment.h \
+    area.h
 
 unix {
     target.path = /usr/lib

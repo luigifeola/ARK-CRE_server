@@ -1,10 +1,10 @@
-#ifndef DHTFENVIRONMENT_H
-#define DHTFENVIRONMENT_H
+#ifndef CRESENVIRONMENT_H
+#define CRESENVIRONMENT_H
 
 /**
  * Author: Luigi Feola
  *
- * This is the code that specifies the specific environment used for the DHTF experiment.
+ * This is the code that specifies the specific environment used for the CRES experiment.
  * The environment is divided in a 4x4 grid, of theese 16 cells just ACTIVE_AREAS are activated 
  * that have to be accomplished (occupied) by the kilobots.
  * Colours for the resources are blue and red (which represent respectively a SOTF_TASK or a HARD_TASK, 
@@ -27,16 +27,15 @@
 #include "area.h"
 
 #define SCALING 0.5
-#define SHIFTX 0 //sheffield
-#define SHIFTY 1000 //sheffield
-//#define SHIFTX 500 //cnr
-//#define SHIFTY 500 //cnr
+//#define SHIFTX 0 //sheffield
+//#define SHIFTY 1000 //sheffield
+#define SHIFTX 500 //cnr
+#define SHIFTY 500 //cnr
 #define ARENA_CENTER 1000
 #define ARENA_SIZE 2000
-// #define KILO_DIAMETER 66 //cnr
-#define KILO_DIAMETER 33 //sheffield
-#define ACTIVE_AREAS 8
-#define HARD_TASKS_NUMBER 4
+#define KILO_DIAMETER 66 //cnr
+//#define KILO_DIAMETER 33 //sheffield
+#define CM_TO_PIXEL 20
 
 typedef enum {
     RANDOM_WALK=0,
@@ -83,7 +82,7 @@ public slots:
 
 private:
     bool isTooclose(int kilobot_id);
-    void initialiseEnvironment(QVector<int> activated_areas, QVector<uint> hard_tasks, QVector<uint> hard_tasks_client);
+    void initialiseEnvironment(QVector<uint> resource_north_id, QVector<uint> resource_south_id);
     double normAngle(double angle);
     QVector2D VectorRotation2D (double angle, QVector2D vec);
     QVector<int> proximity_sensor(QVector2D obstacle_direction, double kilo_rotation, int num_bit);
@@ -92,4 +91,4 @@ private:
 
 
 
-#endif // DHTFENVIRONMENT_H
+#endif // CRESENVIRONMENT_H

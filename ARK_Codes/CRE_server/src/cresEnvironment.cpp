@@ -1,7 +1,7 @@
-#ifndef DHTFENVIRONMENT_CPP
-#define DHTFENVIRONMENT_CPP
+#ifndef CRESENVIRONMENT_CPP
+#define CRESENVIRONMENT_CPP
 
-#include "dhtfEnvironment.h"
+#include "cresEnvironment.h"
 #include "area.h"
 
 #include "kilobot.h"
@@ -23,7 +23,11 @@ namespace {
     const QVector2D left_direction (1.0,0.0);
     const QVector2D right_direction (-1.0,0.0);
     const double reachable_distance = (ARENA_SIZE*SCALING/2) - (2*KILO_DIAMETER);
-    const int num_sectors = 8;
+    const int num_sectors = 6;
+
+    const int kTotalResourceNum = 100;
+    const int kNorthResourceNum = 30;
+    const int kSouthResourceNum = 15;
 }
 
 double mykilobotenvironment::normAngle(double angle){
@@ -83,57 +87,20 @@ mykilobotenvironment::mykilobotenvironment(QObject *parent) : KilobotEnvironment
     reset();
 }
 
-void mykilobotenvironment::initialiseEnvironment(QVector<int> activated_areas, QVector<uint> hard_tasks, QVector<uint> hard_tasks_client){
+void mykilobotenvironment::initialiseEnvironment(QVector<uint> resource_north_id, QVector<uint> resource_south_id){
 
     double white_space = SCALING * 2 * KILO_DIAMETER;
-    double radius = (((2.0*ARENA_CENTER*SCALING - white_space)/ 4.0) - white_space)/2.0;
+    double radius = (((2.0*ARENA_CENTER*SCALING - white_space)/ 10.0) - white_space)/2.0;
     // qDebug() << QString("radius") << radius;
     QPointF areasOffset(SHIFTX,SHIFTY);
 
-    for (int areaID=0; areaID<16; ++areaID){
-        if(std::find(activated_areas.begin(),activated_areas.end(), areaID) != activated_areas.end())
-        {
-            QPointF areaPos((1.0+2.0*(areaID%4))*radius + (1.0+(areaID%4))*white_space, (1.0 + floor(areaID/4)*2.0 )*radius + (1.0 + floor(areaID/4))*white_space);
-            areaPos += areasOffset;
-            if(std::find(hard_tasks.begin(),hard_tasks.end(), areaID) != hard_tasks.end())
-            {
-                if(std::find(hard_tasks_client.begin(),hard_tasks_client.end(), areaID) != hard_tasks_client.end())
-                    areas.push_back(new Area(areaID, HARD_TASK, HARD_TASK, areaPos, radius));
-                else
-                    areas.push_back(new Area(areaID, HARD_TASK, SOFT_TASK, areaPos, radius));
-            }
-
-            else
-            {
-                if(std::find(hard_tasks_client.begin(),hard_tasks_client.end(), areaID) != hard_tasks_client.end())
-                    areas.push_back(new Area(areaID, SOFT_TASK, HARD_TASK, areaPos, radius));
-                else
-                    areas.push_back(new Area(areaID, SOFT_TASK, SOFT_TASK, areaPos, radius));
-            }
-
-        }
+    for (int areaID=0; areaID<kTotalResourceNum; ++areaID){
+        QPointF areaPos((1.0+2.0*(areaID%10))*radius + (1.0+(areaID%10))*white_space, (1.0 + floor(areaID/10.0)*2.0 )*radius + (1.0 + floor(areaID/10.0))*white_space);
+        areaPos += areasOffset;
+        areas.push_back(new Area(areaID, HARD_TASK, HARD_TASK, areaPos, radius));
     }
 
    // areas.push_back(new Area(0, HARD_TASK, QPointF(1.0*radius + 1.0*white_space,1.0*radius + 1.0*white_space), radius));
-   // areas.push_back(new Area(1, HARD_TASK, QPointF(3.0*radius + 2.0*white_space,1.0*radius + 1.0*white_space), radius));
-   // areas.push_back(new Area(2, HARD_TASK, QPointF(5.0*radius + 3.0*white_space,1.0*radius + 1.0*white_space), radius));
-   // areas.push_back(new Area(3, HARD_TASK, QPointF(7.0*radius + 4.0*white_space,1.0*radius + 1.0*white_space), radius));
-
-   // areas.push_back(new Area(4, SOFT_TASK, QPointF(1.0*radius + 1.0*white_space,3.0*radius + 2.0*white_space), radius));
-   // areas.push_back(new Area(5, SOFT_TASK, QPointF(3.0*radius + 2.0*white_space,3.0*radius + 2.0*white_space), radius));
-   // areas.push_back(new Area(6, SOFT_TASK, QPointF(5.0*radius + 3.0*white_space,3.0*radius + 2.0*white_space), radius));
-   // areas.push_back(new Area(7, SOFT_TASK, QPointF(7.0*radius + 4.0*white_space,3.0*radius + 2.0*white_space), radius));
-
-   // areas.push_back(new Area(8, HARD_TASK, QPointF(1.0*radius + 1.0*white_space,5.0*radius + 3.0*white_space), radius));
-   // areas.push_back(new Area(9, HARD_TASK, QPointF(3.0*radius + 2.0*white_space,5.0*radius + 3.0*white_space), radius));
-   // areas.push_back(new Area(10, HARD_TASK, QPointF(5.0*radius + 3.0*white_space,5.0*radius + 3.0*white_space), radius));
-   // areas.push_back(new Area(11, HARD_TASK, QPointF(7.0*radius + 4.0*white_space,5.0*radius + 3.0*white_space), radius));
-
-   // areas.push_back(new Area(12, HARD_TASK, QPointF(1.0*radius + 1.0*white_space,7.0*radius + 4.0*white_space), radius));
-   // areas.push_back(new Area(13, HARD_TASK, QPointF(3.0*radius + 2.0*white_space,7.0*radius + 4.0*white_space), radius));
-   // areas.push_back(new Area(14, HARD_TASK, QPointF(5.0*radius + 3.0*white_space,7.0*radius + 4.0*white_space), radius));
-   // areas.push_back(new Area(15, HARD_TASK, QPointF(7.0*radius + 4.0*white_space,7.0*radius + 4.0*white_space), radius));
-
 }
 
 void mykilobotenvironment::reset(){
@@ -150,113 +117,85 @@ void mykilobotenvironment::reset(){
     std::default_random_engine re;
 //    re.seed(0);
     re.seed(qrand());
-    QVector<int> activated_areas;
-    const QVector<int> forbidden( { 0,3,12,15} );
-    QVector<uint> hard_tasks;
-    QVector<uint> hard_tasks_client;
+    QVector<uint> resource_north_id;
+    QVector<uint> resource_south_id;
 
     int start = 0;
-    int end = 15;
-    while(activated_areas.size()<ACTIVE_AREAS)
-    {
-        if(ACTIVE_AREAS-1 > end){
-            qDebug() << " Requested more areas than the available ones, you should increase end";
-        }
-        std::uniform_int_distribution<uint> distr(start, end);
-        uint random_number;
-        do{
-        // qDebug() << QString("Drawing a random number");
-            random_number = distr(re);
-        }while (
-                ( std::find(activated_areas.begin(),activated_areas.end(), random_number) != activated_areas.end() ) ||
-                ( std::find(forbidden.begin(),forbidden.end(), random_number) != forbidden.end() )
-                );
-        activated_areas.push_back(random_number);
-    }
-    std::sort(activated_areas.begin(), activated_areas.end());
+    int end = (kTotalResourceNum/2)-1;
 
-    // Print selected areas
-    QDebug dbg(QtDebugMsg); // plotting on one line even with the loop
-    dbg << "Selected areas: ";
-    for(int act_ar : activated_areas) {
-        dbg << act_ar << ", ";
-    }
-
-    while(hard_tasks.size()<HARD_TASKS_NUMBER)
+    while(resource_north_id.size()<kNorthResourceNum)
     {
         std::uniform_int_distribution<uint> distr(start, end);
         uint random_number;
         do{
             random_number = distr(re);
         // qDebug() << QString("Drawing the number: ") << random_number;
-        }while (std::find(activated_areas.begin(),activated_areas.end(), random_number) == activated_areas.end() ||
-                std::find(hard_tasks.begin(),hard_tasks.end(), random_number) != hard_tasks.end());
-        hard_tasks.push_back(random_number);
+        }while (std::find(resource_north_id.begin(),resource_north_id.end(), random_number) != resource_north_id.end());
+        resource_north_id.push_back(random_number);
     }
-    std::sort(hard_tasks.begin(), hard_tasks.end());
+    std::sort(resource_north_id.begin(), resource_north_id.end());
 
     // Show selected hard tasts for server
-    qDebug() << QString("Selected hard tasks server");
-    for(uint h_task : hard_tasks)
+    qDebug() << QString("Selected north resources");
+    for(uint r_task : resource_north_id)
     {
-        qDebug() << h_task;
+        qDebug() << r_task;
     }
 
 
-    while(hard_tasks_client.size()<HARD_TASKS_NUMBER)
+    while(resource_south_id.size()<kSouthResourceNum)
     {
         std::uniform_int_distribution<uint> distr(start, end);
         uint random_number;
         do{
             random_number = distr(re);
         // qDebug() << QString("Drawing the number: ") << random_number;
-        }while (std::find(activated_areas.begin(),activated_areas.end(), random_number) == activated_areas.end() ||
-                std::find(hard_tasks_client.begin(),hard_tasks_client.end(), random_number) != hard_tasks_client.end());
-        hard_tasks_client.push_back(random_number);
+        }while (std::find(resource_south_id.begin(),resource_south_id.end(), random_number) != resource_south_id.end());
+        resource_south_id.push_back(random_number+(kTotalResourceNum/2));
     }
-    std::sort(hard_tasks_client.begin(), hard_tasks_client.end());
+    std::sort(resource_south_id.begin(), resource_south_id.end());
 
 
     // Show selected hard tasts for client
     qDebug() << QString("Selected hard tasks client");
-    for(uint h_task : hard_tasks_client)
+    for(uint r_task : resource_south_id)
     {
-        qDebug() << h_task;
+        qDebug() << r_task;
     }
 
 
-    initialiseEnvironment(activated_areas, hard_tasks, hard_tasks_client);
+    initialiseEnvironment(resource_north_id, resource_south_id);
 
-    // preparint initialise ("I") server message
-    QVector<int> server_task (activated_areas.size(), 0);
-    QVector<int> client_task (activated_areas.size(), 0);
+//    // preparint initialise ("I") server message
+//    QVector<int> server_task (activated_areas.size(), 0);
+//    QVector<int> client_task (activated_areas.size(), 0);
 
-    initialise_buffer = "I";
+//    initialise_buffer = "I";
 
-    for(int i=0; i<activated_areas.size(); i++)
-    {
-        int char_id = 97+activated_areas[i];    // 97 is a in ASCII table
-        initialise_buffer.append(QChar(char_id));
+//    for(int i=0; i<activated_areas.size(); i++)
+//    {
+//        int char_id = 97+activated_areas[i];    // 97 is a in ASCII table
+//        initialise_buffer.append(QChar(char_id));
 
-        if(std::find(hard_tasks.begin(),hard_tasks.end(), activated_areas[i]) != hard_tasks.end())
-            server_task[i] = 1;
+//        if(std::find(hard_tasks.begin(),hard_tasks.end(), activated_areas[i]) != hard_tasks.end())
+//            server_task[i] = 1;
 
-        if(std::find(hard_tasks_client.begin(),hard_tasks_client.end(), activated_areas[i]) != hard_tasks_client.end())
-            client_task[i] = 1;
+//        if(std::find(hard_tasks_client.begin(),hard_tasks_client.end(), activated_areas[i]) != hard_tasks_client.end())
+//            client_task[i] = 1;
 
-    }
+//    }
 
-    qDebug() << "server " << server_task;
-    qDebug() << "client " << client_task;
+//    qDebug() << "server " << server_task;
+//    qDebug() << "client " << client_task;
 
-    for(uint s_task : server_task)
-    {
-        initialise_buffer.append(QString::number(s_task));
-    }
-    for(uint c_task : client_task)
-    {
-        initialise_buffer.append(QString::number(c_task));
-    }
+//    for(uint s_task : server_task)
+//    {
+//        initialise_buffer.append(QString::number(s_task));
+//    }
+//    for(uint c_task : client_task)
+//    {
+//        initialise_buffer.append(QString::number(c_task));
+//    }
 
 
 
@@ -425,7 +364,7 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
         /* data has 3x24 bits divided as                             */
         /*   ID 10b    type 4b  data 10b     <- ARK msg              */
         /*  data[0]   data[1]   data[2]      <- kb msg               */
-        /* xxxx xxxx xxyy yy// wwww zzzz     <- dhtf                 */
+        /* xxxx xxxx xxyy yy// wwww zzzz     <- cres                 */
         /* x bits used for kilobot id                                */
         /* y bits used for inside/outside                            */
         /* w bits used for wall avoidance                            */
@@ -557,7 +496,7 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
 
     }
 
-#endif // DHTFENVIRONMENT_CPP
+#endif // CRESENVIRONMENT_CPP
 
 
 }
