@@ -6,7 +6,6 @@
 
 #define COLLISION_BITS 6
 #define SECTORS_IN_COLLISION 2
-#define ARGOS_SIMULATION
 #define RESOURCES_SIZE 2
 
 typedef enum
@@ -46,13 +45,13 @@ typedef enum
 motion_t current_motion_type = STOP;             // Current motion type
 decision_t current_decision_state = UNCOMMITTED; // Current state
 
-/*Random walk*/
+/*Walk parameter*/
 const float std_motion_steps = 20 * 16; // variance of the gaussian used to compute forward motion
-const float levy_exponent = 2;          // 2 is brownian like motion (alpha)
-const float crw_exponent = 0.4;         // higher more straight (rho)
+const float levy_exponent = 1.4;        // 2 is brownian like motion (alpha)
+const float crw_exponent = 0.9;         // higher more straight (rho)
 uint32_t turning_ticks = 0;             // keep count of ticks of turning
-const uint8_t max_turning_ticks = 120;  /* constant to allow a maximum rotation of 180 degrees with \omega=\pi/5 */
-uint32_t straight_ticks = 0;            // keep count of ticks of going straight
+const uint8_t max_turning_ticks = 80;   // constant to allow a maximum rotation of 180 degrees with \omega=\pi/5
+unsigned int straight_ticks = 0;        // keep count of ticks of going straight
 const uint16_t max_straight_ticks = 320;
 uint32_t last_motion_ticks = 0;
 /* ---------------------------------------------- */
@@ -71,6 +70,7 @@ bool wall_avoidance_start = false;
 /** Variables for Smart Arena messages */
 uint8_t sa_payload_north = 0;
 uint8_t sa_payload_south = 0;
+uint8_t start = 0; // waiting from ARK a start signal to run the experiment 0 : not received, 1 : received, 2 : not need anymore to receive
 bool new_sa_msg = false;
 uint8_t sent_message = 1;
 bool to_send_message = false;
@@ -230,11 +230,29 @@ void rx_message(message_t *msg, distance_measurement_t *d)
     }
   }
 
+  /* start signal!*/
+  else if (msg->type == 2 && start != 2)
+  {
+    start = 1;
+  }
+
+  /* ARK ID identification */
+  else if (msg->type == 120)
+  {
+    int id = (msg->data[0] << 8) | msg->data[1];
+    if (id == kilo_uid)
+    {
+      set_color(RGB(0, 0, 3));
+    }
+    else
+    {
+      set_color(RGB(3, 0, 0));
+    }
+  }
+
   /*type 1 is for messages coming from other kilobots*/
   else if (msg->type == 1)
   {
-    // printf("Receiving message\t");
-    // printf("msg->data[0]= %d\n", msg->data[0]);
     /* get id (always firt byte when coming from another kb) */
     uint8_t id = msg->data[0];
     // check that is a valid crc and another kb
@@ -430,31 +448,21 @@ void take_decision()
 /*-------------------------------------------------------------------*/
 void set_motion(motion_t new_motion_type)
 {
-  bool calibrated = true;
   if (current_motion_type != new_motion_type)
   {
     switch (new_motion_type)
     {
     case FORWARD:
       spinup_motors();
-      if (calibrated)
-        set_motors(kilo_straight_left, kilo_straight_right);
-      else
-        set_motors(70, 70);
+      set_motors(kilo_straight_left, kilo_straight_right);
       break;
     case TURN_LEFT:
       spinup_motors();
-      if (calibrated)
-        set_motors(kilo_turn_left, 0);
-      else
-        set_motors(70, 0);
+      set_motors(kilo_turn_left, 0);
       break;
     case TURN_RIGHT:
       spinup_motors();
-      if (calibrated)
-        set_motors(0, kilo_turn_right);
-      else
-        set_motors(0, 70);
+      set_motors(0, kilo_turn_right);
       break;
     case STOP:
     default:
@@ -515,7 +523,7 @@ void random_walk()
 
   case STOP:
   default:
-    set_motion(FORWARD);
+    set_motion(STOP);
   }
 }
 
@@ -536,7 +544,7 @@ void setup()
 
   /* Initialise motion variables */
   last_motion_ticks = rand() % max_straight_ticks;
-  set_motion(FORWARD);
+  set_motion(STOP);
 
   /* Precompile possible messages*/
   messageN.type = 1;
@@ -555,6 +563,14 @@ void setup()
 /*-------------------------------------------------------------------*/
 void loop()
 {
+  if (start == 1)
+  {
+    /* Initialise motion variables */
+    last_motion_ticks = rand() % max_straight_ticks;
+    set_motion(FORWARD);
+    start = 2;
+  }
+
   if (wall_avoidance_start)
   {
     wall_avoidance_procedure(proximity_sensor);
@@ -572,8 +588,9 @@ int main()
 {
   kilo_init();
   kilo_message_rx = rx_message;
-  kilo_message_tx = message_tx;
-  kilo_message_tx_success = message_tx_success;
+  // TODO : UNCOMMENT TO TEST INTRA KILOBOT COMMUNICATION
+  // kilo_message_tx = message_tx;
+  // kilo_message_tx_success = message_tx_success;
   kilo_start(setup, loop);
   return 0;
 }

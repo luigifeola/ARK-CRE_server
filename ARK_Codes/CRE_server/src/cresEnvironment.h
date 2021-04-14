@@ -38,10 +38,9 @@
 #define CM_TO_PIXEL 20
 
 typedef enum {
-    RANDOM_WALK=0,
-    INSIDE_AREA=1,
-    LEAVING=2,
-    PARTY=3,
+    UNCOMMITTED=0,
+    COMMITTED_N=1,
+    COMMITTED_S=2,
 }kilobot_state;
 
 class mykilobotenvironment : public KilobotEnvironment
@@ -49,28 +48,26 @@ class mykilobotenvironment : public KilobotEnvironment
     Q_OBJECT
 public:
     explicit mykilobotenvironment(QObject *parent = 0);
-    void reset();
+    void reset(bool offline_exp);
 
     QVector<kilobot_state> kilobots_states; // list of all kilobots locations meaning 0 for outside areas, 1 for inside
-    QVector<kilobot_state> kilobots_states_LOG;
     QVector<QPointF> kilobots_positions;    // list of all kilobots positions
-    QVector<QColor> kilobots_colours;  // list of all kilobots led colours, the led indicate the state of the kilobot
+    QVector<QColor> kilobots_colours;       // list of all kilobots led colours, the led indicate the state of the kilobot
 
-    QVector<Area*> areas;   // list of all areas present in the experiment
-    Area* completed_area = new Area(1000, 0, 0, QPointF(1000.0,1000.0),200.0); // random values
+    QVector<Area*> areas;                   // list of all areas present in the experiment
 
-    QVector<float> lastSent;    // when the last message was sent to the kb at given position
+    QVector<float> lastSent;                // when the last message was sent to the kb at given position
 
 
     int ArenaX, ArenaY;
 
-    float minTimeBetweenTwoMsg; // minimum time between two messages
+    float minTimeBetweenTwoMsg;             // minimum time between two messages
     double time;
     bool saveLOG;
     bool initialised_client = false;
-    QString initialise_buffer;
-    QString send_buffer;
-    QString receive_buffer;
+    QString initialise_buffer;              //string with init parameters
+    QString send_buffer;                    //string sended to the client
+    QString receive_buffer;                 //string received from the client
 // signals and slots are used by qt to signal state changes to objects
 signals:
     void errorMessage(QString);

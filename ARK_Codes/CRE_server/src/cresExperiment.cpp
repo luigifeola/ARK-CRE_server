@@ -320,36 +320,35 @@ void mykilobotexperiment::run() {
     // Update Environment
     cresEnvironment.time = (float)time;
 
-    if(cresEnvironment.receive_buffer.startsWith("R")){
-        cresEnvironment.initialised_client = true;
-//        qDebug() << "************************************";
-//        qDebug() << "*********INITIALISED ***************";
-//        qDebug() << "************************************";
-//        qDebug() << "************************************";
-//        qDebug() << "************************************";
-//        qDebug() << "************************************";
-    }
-    else if(cresEnvironment.initialised_client == false || cresEnvironment.receive_buffer.startsWith("M"))
+    if(offline_experiment == false)
     {
-        sendToClient(cresEnvironment.initialise_buffer);
+        if(cresEnvironment.receive_buffer.startsWith("R")){
+            cresEnvironment.initialised_client = true;
+    //        qDebug() << "*********INITIALISED ***************";
+        }
+        else if(cresEnvironment.initialised_client == false || cresEnvironment.receive_buffer.startsWith("M"))
+        {
+            sendToClient(cresEnvironment.initialise_buffer);
+        }
+
+
+        else if(cresEnvironment.send_buffer.startsWith("A") && qRound((this->time-last_ARK_message)*10.0f) >= ARK_message_period*10.0f )
+        {
+            // qDebug() << "ARK messages time: " << this->time <<" at " << QLocale("en_GB").toString( QDateTime::currentDateTime(), "hh:mm:ss.zzz");
+            last_ARK_message = this->time;
+            sendToClient(cresEnvironment.send_buffer);
+            cresEnvironment.send_buffer.clear();
+        }
+
+        cresEnvironment.update();
+
     }
-
-
-    else if(cresEnvironment.send_buffer.startsWith("A") && qRound((this->time-last_ARK_message)*10.0f) >= ARK_message_period*10.0f )
-    {
-        // qDebug() << "ARK messages time: " << this->time <<" at " << QLocale("en_GB").toString( QDateTime::currentDateTime(), "hh:mm:ss.zzz");
-        last_ARK_message = this->time;
-        sendToClient(cresEnvironment.send_buffer);
-        cresEnvironment.send_buffer.clear();
-    }
-
-    cresEnvironment.update();
 
     // BROADCAST START SIGNAL
     if(this->time <= 2.0)
     {
         kilobot_broadcast message;
-        message.type = 1;
+        message.type = 2;
         emit broadcastMessage(message);
     }
 
@@ -422,9 +421,6 @@ void mykilobotexperiment::setupInitialKilobotState(Kilobot kilobot_entity) {
     if(cresEnvironment.kilobots_states.size() < k_id+1) {
         cresEnvironment.kilobots_states.resize(k_id+1);
     }
-    if(cresEnvironment.kilobots_states_LOG.size() < k_id+1) {
-        cresEnvironment.kilobots_states_LOG.resize(k_id+1);
-    }
     if(cresEnvironment.kilobots_colours.size() < k_id+1) {
         cresEnvironment.kilobots_colours.resize(k_id+1);
     }
@@ -435,12 +431,11 @@ void mykilobotexperiment::setupInitialKilobotState(Kilobot kilobot_entity) {
 
     // TODO initialize kilobots location correctly
     cresEnvironment.kilobots_positions[k_id] = kilobot_entity.getPosition();
-    cresEnvironment.kilobots_states[k_id] = RANDOM_WALK;
-    cresEnvironment.kilobots_states_LOG[k_id] = RANDOM_WALK;
+    cresEnvironment.kilobots_states[k_id] = UNCOMMITTED;
     cresEnvironment.kilobots_colours[k_id] = Qt::black;
 
     KiloLog kLog(k_id, kilobot_entity.getPosition(), 0, kilobot_entity.getLedColour());
-    kLog.state=RANDOM_WALK;
+    kLog.state=UNCOMMITTED;
     kilobots[k_id] = kLog;
     // qDebug() << "ORIENTATION IS " << kilobots[k_id].orientation;
     if(!kilobots_ids.contains(k_id))
@@ -472,7 +467,17 @@ void mykilobotexperiment::updateKilobotState(Kilobot kilobotCopy) {
 // Setup Environment:
 void mykilobotexperiment::setupEnvironments( ) {
 //    qDebug() << QString("in setup env");
-    cresEnvironment.reset();
+    if(server->tcpServer->isListening() == false || server->getClients().count() == 0)
+    {
+        offline_experiment = true;
+    }
+    else{
+        offline_experiment = false;
+    }
+
+
+    cresEnvironment.reset(offline_experiment);
+
 }
 
 QColor mykilobotexperiment::GetFloorColor(int track_x, int track_y) {
@@ -513,15 +518,15 @@ void mykilobotexperiment::plotEnvironment() {
     drawLine(pos3,Qt::blue, 5,"",false);
 
 
-    // arena - 2*Kilo_diameter
-    std::vector<cv::Point> bd0 {Point(SHIFTX+2*KILO_DIAMETER,SHIFTY+2*KILO_DIAMETER), Point(SHIFTX+2*KILO_DIAMETER,SHIFTY+1000-2*KILO_DIAMETER)};
-    drawLine(bd0,Qt::yellow, 3,"",false);
-    std::vector<cv::Point> bd1 {Point(SHIFTX+2*KILO_DIAMETER,SHIFTY+2*KILO_DIAMETER), Point(SHIFTX+1000-2*KILO_DIAMETER,SHIFTY+2*KILO_DIAMETER)};
-    drawLine(bd1,Qt::yellow, 3,"",false);
-    std::vector<cv::Point> bd2 {Point(SHIFTX+2*KILO_DIAMETER,SHIFTY+1000-2*KILO_DIAMETER), Point(SHIFTX+1000-2*KILO_DIAMETER,SHIFTY+1000-2*KILO_DIAMETER)};
-    drawLine(bd2,Qt::yellow, 3,"",false);
-    std::vector<cv::Point> bd3 {Point(SHIFTX+1000-2*KILO_DIAMETER,SHIFTY+2*KILO_DIAMETER), Point(SHIFTX+1000-2*KILO_DIAMETER,SHIFTY+1000-2*KILO_DIAMETER)};
-    drawLine(bd3,Qt::yellow, 3,"",false);
+    // arena - 3/2 Kilo_diameter
+    std::vector<cv::Point> sbd0 {Point(SHIFTX+(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+(int)(3.0/2.0*KILO_DIAMETER)), Point(SHIFTX+(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER))};
+    drawLine(sbd0,Qt::yellow, 3,"",false);
+    std::vector<cv::Point> sbd1 {Point(SHIFTX+(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+(int)(3.0/2.0*KILO_DIAMETER)), Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+(int)(3.0/2.0*KILO_DIAMETER))};
+    drawLine(sbd1,Qt::yellow, 3,"",false);
+    std::vector<cv::Point> sbd2 {Point(SHIFTX+(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER)), Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER))};
+    drawLine(sbd2,Qt::yellow, 3,"",false);
+    std::vector<cv::Point> sbd3 {Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+(int)(3.0/2.0*KILO_DIAMETER)), Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER))};
+    drawLine(sbd3,Qt::yellow, 3,"",false);
 
      // Draw some useful position : center + 4 corners
      // drawCircle(QPoint(ARENA_CENTER,ARENA_CENTER), 30.0, QColor(Qt::black), 15, "", false);
@@ -537,9 +542,9 @@ void mykilobotexperiment::plotEnvironment() {
      {
 
          if(!a->completed)
-             drawCircle(a->position, a->radius, a->color, 3, std::to_string(a->id), false);
-         else
-             drawCircle(a->position, a->radius, Qt::transparent, 3, std::to_string(a->id), false);
+             drawCircle(a->position, a->radius, a->color, 2, /*std::to_string(a->id)*/"", false);
+//         else
+//             drawCircle(a->position, a->radius, Qt::transparent, 2, /*std::to_string(a->id)*/"", false);
 
 
 

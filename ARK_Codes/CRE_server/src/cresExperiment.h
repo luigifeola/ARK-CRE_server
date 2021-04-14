@@ -152,6 +152,9 @@ private:
     mykilobotenvironment cresEnvironment;
     QTime m_elapsed_time;
 
+    //
+    bool offline_experiment = true;
+
     // logging variables
     bool saveImages;
     int savedImagesCounter;
