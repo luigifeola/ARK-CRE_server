@@ -27,7 +27,7 @@ namespace {
 
     const int kTotalResourceNum = 100;
     const int kNorthResourceNum = 30;
-    const int kSouthResourceNum = 15;
+    const int kSouthResourceNum = 49;
     const double kVisionRange = 8.0 * CM_TO_PIXEL;
 }
 
@@ -126,6 +126,9 @@ void mykilobotenvironment::reset(bool offline_exp){
     kilobots_positions.clear();
     kilobots_colours.clear();
 
+    isCommunicationTime = false;
+    lastTransitionTime = this->time;
+
     std::default_random_engine re;
 //    re.seed(0);
     re.seed(qrand());
@@ -157,13 +160,13 @@ void mykilobotenvironment::reset(bool offline_exp){
 
         while(resource_south_id.size()<kSouthResourceNum)
         {
-            std::uniform_int_distribution<uint> distr(start, end);
+            std::uniform_int_distribution<uint> distr(start+(kTotalResourceNum/2), end+(kTotalResourceNum/2));
             uint random_number;
             do{
                 random_number = distr(re);
             // qDebug() << QString("Drawing the number: ") << random_number;
             }while (std::find(resource_south_id.begin(),resource_south_id.end(), random_number) != resource_south_id.end());
-            resource_south_id.push_back(random_number+(kTotalResourceNum/2));
+            resource_south_id.push_back(random_number);
         }
         std::sort(resource_south_id.begin(), resource_south_id.end());
 
@@ -256,8 +259,10 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
     }
 
 
+
     // then if it is time to send the message to the kilobot send info to the kb
-    if(this->time - this->lastSent[k_id] > minTimeBetweenTwoMsg){
+    if(!this->isCommunicationTime && this->time - this->lastSent[k_id] > minTimeBetweenTwoMsg)
+    {
         /* Prepare the inividual kilobot's message                   */
         /* see README.md to understand about ARK messaging           */
         /* data has 3x24 bits divided as                             */
@@ -277,6 +282,7 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
 
         /**********************EXPERIMENT STUFF****************************/
         double total_north_area = 0.0, north_area_on = 0.0, total_south_area = 0.0, south_area_on = 0.0;
+        uint8_t resource_north=0.0, resource_south=0.0;
         for(int id=0; id<areas.size(); id++)
         {
             if(areas[id]->isInRange(kilobot_entity.getPosition(), kVisionRange))
@@ -300,6 +306,8 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
                 }
             }
         }
+        resource_north = (uint8_t)std::floor(63.0 * (north_area_on/total_north_area));
+        resource_south = (uint8_t)std::floor(63.0 * (south_area_on/total_south_area));
 
         /***********************WALL AVOIDANCE STUFF***********************/
         // store kb rotation toward the center if the kb is too close to the border
@@ -384,13 +392,20 @@ void mykilobotenvironment::updateVirtualSensor(Kilobot kilobot_entity) {
         }
 
         message.id = k_id<<4;
-        message.type = 0;
-        message.data = proximity_decimal;
+        message.id = message.id | (resource_north >> 2);
 
-        qDebug() << "time:"<<this->time
-                 << " MESSAGE to " << k_id
-                 << "type " << message.type
-                 << "payload " << message.data;
+        message.type = resource_north << 2;
+        message.type = message.type | (resource_south >> 4);
+
+        message.data = resource_south << 6;
+        message.data = message.data | proximity_decimal;
+
+//        qDebug() << "time:"<<this->time
+//                 << " MESSAGE to " << k_id
+//                 << "r_north " << resource_north
+//                 << "r_south " << resource_south
+//                 << "wall_avoid " << proximity_decimal;
+
         lastSent[k_id] = this->time;
         emit transmitKiloState(message);
 

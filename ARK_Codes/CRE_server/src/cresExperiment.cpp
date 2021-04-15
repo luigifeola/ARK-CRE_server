@@ -316,6 +316,41 @@ void mykilobotexperiment::run() {
         emit(experimentComplete());
     }
 
+    // Broadcast START signal at beginning in order to run the kilobots
+    if(this->time <= 2.0)
+    {
+        kilobot_broadcast message;
+        message.type = 2;
+        emit broadcastMessage(message);
+    }
+
+    // update environment
+    // switch between communication time and exploration time
+    if(!cresEnvironment.isCommunicationTime && cresEnvironment.exploration_time <= this->time - cresEnvironment.lastTransitionTime)
+    {
+        cresEnvironment.isCommunicationTime = true;
+        cresEnvironment.lastTransitionTime = this->time;
+        kilobot_broadcast message;
+        message.type = (int)COMMUNICATION;
+        emit broadcastMessage(message);
+    }
+    else if(cresEnvironment.isCommunicationTime && cresEnvironment.communication_time <= this->time - cresEnvironment.lastTransitionTime)
+    {
+        cresEnvironment.isCommunicationTime = false;
+        cresEnvironment.lastTransitionTime = this->time;
+        kilobot_broadcast message;
+        message.type = (int)STOP_COMMUNICATION;
+        emit broadcastMessage(message);
+    }
+
+    // emit continuosly the "COMMUNICATION" or "sSTOP_COMMUNICATION" message
+    // do this few times per second to avoid interferences
+    if(uint(this->time*10)%10 == 0) {
+        kilobot_broadcast message;
+        message.type = cresEnvironment.isCommunicationTime?(int)COMMUNICATION:(int)STOP_COMMUNICATION;
+        emit broadcastMessage(message);
+    }
+
 
     // Update Environment
     cresEnvironment.time = (float)time;
@@ -324,7 +359,7 @@ void mykilobotexperiment::run() {
     {
         if(cresEnvironment.receive_buffer.startsWith("R")){
             cresEnvironment.initialised_client = true;
-    //        qDebug() << "*********INITIALISED ***************";
+            // qDebug() << "*********INITIALISED ***************";
         }
         else if(cresEnvironment.initialised_client == false || cresEnvironment.receive_buffer.startsWith("M"))
         {
@@ -342,14 +377,6 @@ void mykilobotexperiment::run() {
 
         cresEnvironment.update();
 
-    }
-
-    // BROADCAST START SIGNAL
-    if(this->time <= 2.0)
-    {
-        kilobot_broadcast message;
-        message.type = 2;
-        emit broadcastMessage(message);
     }
 
     // update kilobots states

@@ -155,6 +155,14 @@ private:
     //
     bool offline_experiment = true;
 
+    //custom message type
+    typedef enum
+    {
+        START = 2,
+        COMMUNICATION = 3,
+        STOP_COMMUNICATION = 4,
+    } kilobot_message_type;
+
     // logging variables
     bool saveImages;
     int savedImagesCounter;

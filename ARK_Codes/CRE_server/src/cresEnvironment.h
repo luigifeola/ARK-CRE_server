@@ -61,6 +61,15 @@ public:
 
     int ArenaX, ArenaY;
 
+    // used to implement the mechanism that switch between exploration and communication (i.e., robots not moving, experiments frozen)
+    double lastTransitionTime; // used to switch between exploration time and communication time
+    // double lastCommunication; // used to transmit either the "communicate" or "stop communication" message three times per second
+    bool isCommunicationTime; // determine if the robots are communicating or explorations
+
+    const int exploration_time = 5;     //in seconds
+    const int communication_time = 5;   //in seconds
+
+
     float minTimeBetweenTwoMsg;             // minimum time between two messages
     double time;
     bool saveLOG;
