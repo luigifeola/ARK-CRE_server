@@ -254,14 +254,6 @@ void rx_message(message_t *msg, distance_measurement_t *d)
   }
   else if (msg->type == 4 && release_the_broadcast)
   {
-    // update variables to restore the kilobot at its previous state
-    /** TODO: the following line is just to test the switching message*/
-    last_motion_ticks = last_motion_ticks + kilo_ticks - last_release_time;
-    set_motion(backup_motion);
-    /** TODO: test if you receive all ark messages */
-    set_color(RGB(3, 3, 3));
-    delay(1000);
-    set_color(RGB(0, 0, 0));
     last_decision_ticks = last_decision_ticks + kilo_ticks - last_release_time;
     // time to stop the broadcast
     release_the_broadcast = 0;
@@ -447,31 +439,28 @@ void take_decision()
     /* erase memory of neighbour commitment*/
     recruiter_state = UNCOMMITTED;
     last_decision_ticks = kilo_ticks;
-    //update led
 
-    /** TODO: uncomment this */
-    // switch (current_decision_state)
-    // {
-    // case (COMMITTED_N):
-    // {
-    //   set_color(RGB(3, 0, 0));
-    //   break;
-    // }
-    // case (COMMITTED_S):
-    // {
-    //   set_color(RGB(0, 0, 3));
-    //   break;
-    // }
-    // case (UNCOMMITTED):
-    // {
-    //   set_color(RGB(0, 0, 0));
-    //   break;
-    // }
-    // default:
-    //   /** TODO: this is for new tested state */
-    //   set_color(RGB(3, 3, 3));
-    // }
-    /************************************************************************/
+    switch (current_decision_state)
+    {
+    case (COMMITTED_N):
+    {
+      set_color(RGB(3, 0, 0));
+      break;
+    }
+    case (COMMITTED_S):
+    {
+      set_color(RGB(0, 0, 1));
+      break;
+    }
+    case (UNCOMMITTED):
+    {
+      set_color(RGB(0, 0, 0));
+      break;
+    }
+    default:
+      /** WARNING: if white, something strange happens */
+      set_color(RGB(3, 3, 3));
+    }
 
     // printf("recruiter ID:%d, state:%d\n", communicated_by, recruiter_state);
     // printf("kID:%d deciding... %d\n", kilo_uid, current_decision_state);
@@ -612,20 +601,17 @@ void loop()
     start = 2;
   }
 
+  take_decision();
+
   if (release_the_broadcast)
   {
-    /** TODO: Just to test the message switch ARK/kilobots, comment "set_motion" and "return" when it works**/
-    // stop moving
-    set_motion(STOP);
+    // speaking phase
     send_own_state();
-    return;
   }
-
   else
   {
-    // stop sending messages
+    // exploring phase
     to_send_message = 0;
-    take_decision();
   }
 
   if (wall_avoidance_start)

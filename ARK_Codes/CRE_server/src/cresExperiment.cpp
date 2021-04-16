@@ -555,6 +555,15 @@ void mykilobotexperiment::plotEnvironment() {
     std::vector<cv::Point> sbd3 {Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+(int)(3.0/2.0*KILO_DIAMETER)), Point(SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER),SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER))};
     drawLine(sbd3,Qt::yellow, 3,"",false);
 
+//    qDebug()<< SHIFTX+(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+(int)(3.0/2.0*KILO_DIAMETER) << '\n'
+//            << SHIFTX+1000-(int)(3.0/2.0*KILO_DIAMETER) << '\t' << SHIFTY+1000-(int)(3.0/2.0*KILO_DIAMETER);
+
      // Draw some useful position : center + 4 corners
      // drawCircle(QPoint(ARENA_CENTER,ARENA_CENTER), 30.0, QColor(Qt::black), 15, "", false);
 

@@ -66,8 +66,8 @@ public:
     // double lastCommunication; // used to transmit either the "communicate" or "stop communication" message three times per second
     bool isCommunicationTime; // determine if the robots are communicating or explorations
 
-    const int exploration_time = 5;     //in seconds
-    const int communication_time = 5;   //in seconds
+    const int exploration_time = 8;     //in seconds
+    const int communication_time = 2;   //in seconds
 
 
     float minTimeBetweenTwoMsg;             // minimum time between two messages
