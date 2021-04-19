@@ -82,7 +82,6 @@ mykilobotenvironment::mykilobotenvironment(QObject *parent) : KilobotEnvironment
     this->send_buffer = "";
     this->receive_buffer = "";
 
-    this->initialise_buffer = "";
     // define environment:
     // call any functions to setup features in the environment (goals, homes locations and parameters).
     // reset(true);
@@ -116,7 +115,41 @@ void mykilobotenvironment::initialiseEnvironment(QVector<uint> resource_north_id
 
 }
 
-void mykilobotenvironment::reset(bool offline_exp){
+std::string ZeroPadNumber(int number)
+{
+    std::ostringstream ss;
+        ss << std::setw( 2 ) << std::setfill( '0' ) << number;
+        return ss.str();
+}
+
+void mykilobotenvironment::InfoToSend()
+{
+    send_buffer.clear();
+    qDebug() << "START of InfoToSend:" << send_buffer;
+    qDebug() << "kilobots_positions.size():" << kilobots_positions.size();
+    for(int kID = 0; kID < kilobots_positions.size(); kID++)
+    {
+        int k_pos_x = (kilobots_positions[kID].x() - SHIFTX)/CM_TO_PIXEL;
+        int k_pos_y = (ARENA_SIZE*SCALING - (kilobots_positions[kID].y() - SHIFTY) ) / CM_TO_PIXEL;
+
+        QString x_pos_str = QString::fromStdString(ZeroPadNumber(k_pos_x));
+        QString y_pos_str = QString::fromStdString(ZeroPadNumber(k_pos_y));
+        send_buffer.append(x_pos_str);
+        send_buffer.append(y_pos_str);
+        send_buffer.append(QString::number(kilobots_states[kID]));
+
+//        qDebug() << kID << "x:" << x_pos_str << " y:" << y_pos_str << " state:" << QString::number(kilobots_states[kID]);
+//        qDebug() << kID << "ARENA_SIZE*SCALING" << ARENA_SIZE*SCALING << '\n'
+//                        << "(kilobots_positions[kID].y() - SHIFTY)" << (kilobots_positions[kID].y() - SHIFTY) << '\n'
+//                        << "(ARENA_SIZE/SCALING - (kilobots_positions[kID].y() - SHIFTY) )" << (ARENA_SIZE/SCALING - (kilobots_positions[kID].y() - SHIFTY) ) << '\n'
+//                        << "y:" << kilobots_positions[kID].y()
+//                        << " y_shift:" << k_pos_y
+//                        << " y_str:" << y_pos_str ;
+    }
+    qDebug() << "END of InfoToSend:" << send_buffer;
+}
+
+void mykilobotenvironment::reset(){
     this->time = 0;
     this->minTimeBetweenTwoMsg = 0;
 
@@ -133,102 +166,62 @@ void mykilobotenvironment::reset(bool offline_exp){
 //    re.seed(0);
     re.seed(qrand());
 
-    if(offline_exp)
+    QVector<uint> resource_north_id;
+    QVector<uint> resource_south_id;
+
+    int start = 0;
+    int end = (kTotalResourceNum/2)-1;
+
+    while(resource_north_id.size()<kNorthResourceNum)
     {
-        QVector<uint> resource_north_id;
-        QVector<uint> resource_south_id;
-
-        int start = 0;
-        int end = (kTotalResourceNum/2)-1;
-
-        while(resource_north_id.size()<kNorthResourceNum)
-        {
-            std::uniform_int_distribution<uint> distr(start, end);
-            uint random_number;
-            do{
-                random_number = distr(re);
-            // qDebug() << QString("Drawing the number: ") << random_number;
-            }while (std::find(resource_north_id.begin(),resource_north_id.end(), random_number) != resource_north_id.end());
-            resource_north_id.push_back(random_number);
-        }
-        std::sort(resource_north_id.begin(), resource_north_id.end());
-
-        // Show selected hard tasts for server
-        qDebug() << QString("Selected north resources");
-        qDebug() << resource_north_id;
-
-
-        while(resource_south_id.size()<kSouthResourceNum)
-        {
-            std::uniform_int_distribution<uint> distr(start+(kTotalResourceNum/2), end+(kTotalResourceNum/2));
-            uint random_number;
-            do{
-                random_number = distr(re);
-            // qDebug() << QString("Drawing the number: ") << random_number;
-            }while (std::find(resource_south_id.begin(),resource_south_id.end(), random_number) != resource_south_id.end());
-            resource_south_id.push_back(random_number);
-        }
-        std::sort(resource_south_id.begin(), resource_south_id.end());
-
-
-        // Show selected hard tasts for client
-        qDebug() << QString("Selected south resources");
-        qDebug() << resource_south_id;
-
-        initialiseEnvironment(resource_north_id, resource_south_id);
+        std::uniform_int_distribution<uint> distr(start, end);
+        uint random_number;
+        do{
+            random_number = distr(re);
+        // qDebug() << QString("Drawing the number: ") << random_number;
+        }while (std::find(resource_north_id.begin(),resource_north_id.end(), random_number) != resource_north_id.end());
+        resource_north_id.push_back(random_number);
     }
+    std::sort(resource_north_id.begin(), resource_north_id.end());
 
-    else{
-        qDebug() << "******WAITING FOR INITIALISATION";
+    // Show selected hard tasts for server
+    qDebug() << QString("Selected north resources");
+    qDebug() << resource_north_id;
+
+
+    while(resource_south_id.size()<kSouthResourceNum)
+    {
+        std::uniform_int_distribution<uint> distr(start+(kTotalResourceNum/2), end+(kTotalResourceNum/2));
+        uint random_number;
+        do{
+            random_number = distr(re);
+        // qDebug() << QString("Drawing the number: ") << random_number;
+        }while (std::find(resource_south_id.begin(),resource_south_id.end(), random_number) != resource_south_id.end());
+        resource_south_id.push_back(random_number);
     }
+    std::sort(resource_south_id.begin(), resource_south_id.end());
 
 
-//    // preparint initialise ("I") server message
-//    QVector<int> server_task (activated_areas.size(), 0);
-//    QVector<int> client_task (activated_areas.size(), 0);
+    // Show selected hard tasts for client
+    qDebug() << QString("Selected south resources");
+    qDebug() << resource_south_id;
 
-//    initialise_buffer = "I";
-
-//    for(int i=0; i<activated_areas.size(); i++)
-//    {
-//        int char_id = 97+activated_areas[i];    // 97 is a in ASCII table
-//        initialise_buffer.append(QChar(char_id));
-
-//        if(std::find(hard_tasks.begin(),hard_tasks.end(), activated_areas[i]) != hard_tasks.end())
-//            server_task[i] = 1;
-
-//        if(std::find(hard_tasks_client.begin(),hard_tasks_client.end(), activated_areas[i]) != hard_tasks_client.end())
-//            client_task[i] = 1;
-
-//    }
-
-//    qDebug() << "server " << server_task;
-//    qDebug() << "client " << client_task;
-
-//    for(uint s_task : server_task)
-//    {
-//        initialise_buffer.append(QString::number(s_task));
-//    }
-//    for(uint c_task : client_task)
-//    {
-//        initialise_buffer.append(QString::number(c_task));
-//    }
-
-
-
+    initialiseEnvironment(resource_north_id, resource_south_id);
 
 }
 
 // Only update if environment is dynamic:
 void mykilobotenvironment::update() {
     //eventualmente sarà qui che gestirai il completamento delle aree
-    send_buffer = "A";
+    if(receive_buffer.size() < areas.size()){
+        qDebug() << "ERROR: receive_buffer.size=" << receive_buffer.size() << " and areas.size()=" << areas.size();
+    }
     for(int i = 0; i < areas.size(); i++)
     {
-        if(areas[i]->completed)
-            send_buffer.append(QString::number(1));
+        if(receive_buffer[i] == "1")
+            areas[i]->completed = true;
         else
-            send_buffer.append(QString::number(0));
+            areas[i]->completed = false;
     }
 }
 

@@ -23,6 +23,10 @@
 #include <limits>
 #include <bitset>
 
+//for zero padding of kilo_positions
+#include <iomanip>
+#include <sstream>
+
 #include <kilobotenvironment.h>
 #include "area.h"
 
@@ -48,7 +52,7 @@ class mykilobotenvironment : public KilobotEnvironment
     Q_OBJECT
 public:
     explicit mykilobotenvironment(QObject *parent = 0);
-    void reset(bool offline_exp);
+    void reset();
 
     QVector<kilobot_state> kilobots_states; // list of all kilobots locations meaning 0 for outside areas, 1 for inside
     QVector<QPointF> kilobots_positions;    // list of all kilobots positions
@@ -74,9 +78,11 @@ public:
     double time;
     bool saveLOG;
     bool initialised_client = false;
-    QString initialise_buffer;              //string with init parameters
     QString send_buffer;                    //string sended to the client
     QString receive_buffer;                 //string received from the client
+    friend std::string ZeroPadNumber(int num);
+    void InfoToSend();  //prepare the send_buffer with kilo positions and states
+
 // signals and slots are used by qt to signal state changes to objects
 signals:
     void errorMessage(QString);

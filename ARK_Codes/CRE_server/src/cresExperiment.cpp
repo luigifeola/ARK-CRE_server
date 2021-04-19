@@ -118,7 +118,8 @@ void mykilobotexperiment::smbDisconnectedFromServer()
 
 void mykilobotexperiment::gotNewMesssage(QString msg)
 {
-    qDebug() << "Received from the client: " << msg << " time:" << this->time;
+    /** WARNING: uncomment to see what is received from the client*/
+    // qDebug() << "Received from the client: " << msg << " time:" << this->time;
     cresEnvironment.receive_buffer = msg;
 
 //    for (QTcpSocket* clientsSocket : server->getClients())
@@ -309,6 +310,14 @@ void mykilobotexperiment::run() {
 
     this->time=m_elapsed_time.elapsed()/1000.0; // time in seconds
 
+    if(server->tcpServer->isListening() == false || server->getClients().count() == 0)
+    {
+        offline_experiment = true;
+    }
+    else{
+        offline_experiment = false;
+    }
+
     // stop after given time
     if(this->time >= STOP_AFTER) {
         // close the experiment
@@ -351,26 +360,22 @@ void mykilobotexperiment::run() {
         emit broadcastMessage(message);
     }
 
+///**WARNING REMOVE*/
+//    cresEnvironment.InfoToSend();
+//    qDebug() << cresEnvironment.send_buffer;
 
     // Update Environment
     cresEnvironment.time = (float)time;
 
     if(offline_experiment == false)
     {
-        if(cresEnvironment.receive_buffer.startsWith("R")){
-            cresEnvironment.initialised_client = true;
-            // qDebug() << "*********INITIALISED ***************";
-        }
-        else if(cresEnvironment.initialised_client == false || cresEnvironment.receive_buffer.startsWith("M"))
-        {
-            sendToClient(cresEnvironment.initialise_buffer);
-        }
 
 
-        else if(cresEnvironment.send_buffer.startsWith("A") && qRound((this->time-last_ARK_message)*10.0f) >= ARK_message_period*10.0f )
+        if(qRound((this->time-last_ARK_message)*10.0f) >= ARK_message_period*10.0f )
         {
             // qDebug() << "ARK messages time: " << this->time <<" at " << QLocale("en_GB").toString( QDateTime::currentDateTime(), "hh:mm:ss.zzz");
             last_ARK_message = this->time;
+            cresEnvironment.InfoToSend();
             sendToClient(cresEnvironment.send_buffer);
             cresEnvironment.send_buffer.clear();
         }
@@ -494,16 +499,8 @@ void mykilobotexperiment::updateKilobotState(Kilobot kilobotCopy) {
 // Setup Environment:
 void mykilobotexperiment::setupEnvironments( ) {
 //    qDebug() << QString("in setup env");
-    if(server->tcpServer->isListening() == false || server->getClients().count() == 0)
-    {
-        offline_experiment = true;
-    }
-    else{
-        offline_experiment = false;
-    }
 
-
-    cresEnvironment.reset(offline_experiment);
+    cresEnvironment.reset();
 
 }
 
